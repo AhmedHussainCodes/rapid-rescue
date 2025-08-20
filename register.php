@@ -84,89 +84,129 @@ $stmt->bind_param(
 }
 ob_end_flush();
 ?>
-
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
-            <div class="card">
-                <div class="card-header text-center">
-                    <h4 class="mb-0"><i class="bi bi-person-plus me-2"></i>Create Account</h4>
-                </div>
-                <div class="card-body">
-                    <?php if (!empty($error_message)): ?>
-                        <div class="alert alert-danger" role="alert">
-                            <i class="bi bi-exclamation-triangle-fill me-2"></i><?php echo htmlspecialchars($error_message); ?>
-                        </div>
-                    <?php endif; ?>
-                    
-                    <form method="POST" id="registerForm">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="firstname" class="form-label">First Name</label>
-                                <input type="text" class="form-control" id="firstname" name="firstname" 
-                                       value="<?php echo isset($form_data['firstname']) ? htmlspecialchars($form_data['firstname']) : ''; ?>" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="lastname" class="form-label">Last Name</label>
-                                <input type="text" class="form-control" id="lastname" name="lastname" 
-                                       value="<?php echo isset($form_data['lastname']) ? htmlspecialchars($form_data['lastname']) : ''; ?>" required>
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Email Address</label>
-                            <input type="email" class="form-control" id="email" name="email" 
-                                   value="<?php echo isset($form_data['email']) ? htmlspecialchars($form_data['email']) : ''; ?>" required>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="phone" class="form-label">Phone Number</label>
-                            <input type="tel" class="form-control" id="phone" name="phone" 
-                                   value="<?php echo isset($form_data['phone']) ? htmlspecialchars($form_data['phone']) : ''; ?>" required>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="dob" class="form-label">Date of Birth</label>
-                            <input type="date" class="form-control" id="dob" name="dob" 
-                                   value="<?php echo isset($form_data['dob']) ? htmlspecialchars($form_data['dob']) : ''; ?>" required>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="address" class="form-label">Address</label>
-                            <textarea class="form-control" id="address" name="address" rows="3" required><?php echo isset($form_data['address']) ? htmlspecialchars($form_data['address']) : ''; ?></textarea>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="password" class="form-label">Password</label>
-                                <input type="password" class="form-control" id="password" name="password" required>
-                                <div class="form-text">Minimum 6 characters</div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="confirm_password" class="form-label">Confirm Password</label>
-                                <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
-                            </div>
-                        </div>
-                        
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-person-plus me-2"></i>Create Account
-                            </button>
-                        </div>
-                    </form>
-                    
-                    <hr class="my-4">
-                    
-                    <div class="text-center">
-                        <p class="mb-0">Already have an account?</p>
-                        <a href="login.php" class="btn btn-outline-primary mt-2">
-                            <i class="bi bi-box-arrow-in-right me-2"></i>Login
-                        </a>
+<div class="container d-flex align-items-center justify-content-center mt-4 min-vh-100">
+    <div class="col-md-6 col-lg-5">
+        <div class="card register-card shadow-lg border-0 rounded-4 overflow-hidden">
+            <div class="card-header text-center bg-black text-white py-2">
+                <h4 class="fw-bold mb-0"><i class="bi bi-person-plus me-2"></i>Create Account</h4>
+                <small class="text-black opacity-75">Join Rapid Rescue today</small>
+            </div>
+            <div class="card-body p-4 bg-dark text-white">
+                <?php if (!empty($error_message)): ?>
+                    <div class="alert alert-light border border-danger text-danger d-flex align-items-center small mb-3" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <span><?php echo htmlspecialchars($error_message); ?></span>
                     </div>
+                <?php endif; ?>
+
+                <form method="POST" id="registerForm" class="small">
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <input type="text" class="form-control form-control-sm bg-black text-white border border-light rounded-pill" 
+                                   id="firstname" name="firstname" placeholder="First Name" 
+                                   value="<?php echo isset($form_data['firstname']) ? htmlspecialchars($form_data['firstname']) : ''; ?>" required>
+                        </div>
+                        <div class="col-md-6">
+                            <input type="text" class="form-control form-control-sm bg-black text-white border border-light rounded-pill" 
+                                   id="lastname" name="lastname" placeholder="Last Name" 
+                                   value="<?php echo isset($form_data['lastname']) ? htmlspecialchars($form_data['lastname']) : ''; ?>" required>
+                        </div>
+                    </div>
+
+                    <input type="email" class="form-control form-control-sm bg-black text-white border border-light rounded-pill mt-2" 
+                           id="email" name="email" placeholder="Email" 
+                           value="<?php echo isset($form_data['email']) ? htmlspecialchars($form_data['email']) : ''; ?>" required>
+
+                    <input type="tel" class="form-control form-control-sm bg-black text-white border border-light rounded-pill mt-2" 
+                           id="phone" name="phone" placeholder="Phone Number" 
+                           value="<?php echo isset($form_data['phone']) ? htmlspecialchars($form_data['phone']) : ''; ?>" required>
+
+                    <input type="date" class="form-control form-control-sm bg-black text-white border border-light rounded-pill mt-2" 
+                           id="dob" name="dob" value="<?php echo isset($form_data['dob']) ? htmlspecialchars($form_data['dob']) : ''; ?>" required>
+
+                    <textarea class="form-control form-control-sm bg-black text-white border border-light rounded-3 mt-2" 
+                              id="address" name="address" rows="2" placeholder="Address" required><?php echo isset($form_data['address']) ? htmlspecialchars($form_data['address']) : ''; ?></textarea>
+<div class="row g-2 mt-1">
+  <!-- Password -->
+  <div class="col-md-6 position-relative">
+    <input type="password" 
+           class="form-control form-control-sm bg-black text-white border border-light rounded-pill pe-5" 
+           id="password" placeholder="Password" name="password" required>
+    <i class="bi bi-eye position-absolute bottom-4 end-0 translate-middle-y me-3 fs-6 toggle-password" 
+       data-target="password" style="cursor: pointer;"></i>
+    <small class="text-secondary">Min 6 characters</small>
+  </div>
+
+  <!-- Confirm Password -->
+  <div class="col-md-6 position-relative">
+    <input type="password" 
+           class="form-control form-control-sm bg-black text-white border border-light rounded-pill" 
+           id="confirm_password" placeholder="Confirm Password" name="confirm_password" required>
+    <i class="bi bi-eye position-absolute bottom-4 end-0 translate-middle-y me-3 fs-6 toggle-password" 
+       data-target="confirm_password" style="cursor: pointer;"></i>
+  </div>
+</div>
+
+                    <div class="d-grid mt-3">
+                        <button type="submit" class="btn btn-light text-black fw-bold rounded-pill py-2 shadow-sm">
+                            <i class="bi bi-person-plus me-1"></i>Create Account
+                        </button>
+                    </div>
+                </form>
+
+                <hr class="my-3 border-light opacity-50">
+
+                <div class="text-center small">
+                    <p class=" text-light opacity-75"><i class="bi bi-box-arrow-in-right me-1"></i>Have an account?
+                 <a href="login.php" class="fw-bold text-white register-link">
+                        Login
+                    </a>
+                </p>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<?php include 'includes/footer.php'; ?>
+<style>
+    .register-card {
+        animation: fadeIn 0.5s ease-in-out;
+    }
+    .register-link {
+        text-decoration: none;
+        transition: 0.3s ease-in-out;
+    }
+    .register-link:hover {
+        text-decoration: underline;
+        color: #ccc;
+    }
+    .form-control:focus {
+        background-color: #111 !important;
+        color: #fff;
+        box-shadow: none;
+        border-color: white;
+    }
+    .btn:hover {
+        transform: translateY(-2px);
+        transition: 0.3s ease-in-out;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: scale(0.98); }
+        to { opacity: 1; transform: scale(1); }
+    }
+</style>
+<script>
+  // Handle all password toggle icons
+  document.querySelectorAll(".toggle-password").forEach(icon => {
+    icon.addEventListener("click", function () {
+      const targetId = this.getAttribute("data-target");
+      const input = document.getElementById(targetId);
+
+      const type = input.getAttribute("type") === "password" ? "text" : "password";
+      input.setAttribute("type", type);
+
+      this.classList.toggle("bi-eye");
+      this.classList.toggle("bi-eye-slash");
+    });
+  });
+</script>

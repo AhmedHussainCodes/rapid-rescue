@@ -100,6 +100,7 @@ h4 {
   color: var(--black) !important;
   border-bottom: 1px solid var(--border-color) !important;
   font-weight: 600;
+  border: 1px white solid;
 }
 
 /* Streamlined form controls with better performance */

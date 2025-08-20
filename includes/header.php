@@ -29,6 +29,9 @@ if (session_status() == PHP_SESSION_NONE) {
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
+    <!-- Tailwind CSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    
     <!-- GSAP Animation Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js" crossorigin="anonymous"></script>
@@ -44,7 +47,7 @@ if (session_status() == PHP_SESSION_NONE) {
     <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
         <div class="container">
             <a class="navbar-brand fw-bold text-gradient" href="index.php">
-                <i class="bi bi-truck-front-fill me-2"></i>Rapid Rescue
+                <i class="bi bi-truck-front me-1"></i>RapidRescue
             </a>
             
             <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -75,42 +78,51 @@ if (session_status() == PHP_SESSION_NONE) {
                     </li>
                 </ul>
                 
-                <ul class="navbar-nav">
-                    <?php if (isset($_SESSION['user_id'])): ?>
-                        <!-- User is logged in -->
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
-                                    <i class="bi bi-person-fill text-white"></i>
-                                </div>
-                                <?php echo htmlspecialchars($_SESSION['firstname']); ?>
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
-                                <li><a class="dropdown-item" href="profile.php"><i class="bi bi-person me-2"></i>Profile</a></li>
-                                <li><a class="dropdown-item" href="emergency_request.php"><i class="bi bi-plus-circle me-2"></i>Request Ambulance</a></li>
-                                <li><a class="dropdown-item" href="request_tracking.php"><i class="bi bi-geo-alt me-2"></i>Track Request</a></li>
-                                <li><a class="dropdown-item" href="medical_profile.php"><i class="bi bi-heart-pulse me-2"></i>Medical Profile</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item text-danger" href="logout.php"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
-                            </ul>
-                        </li>
-                    <?php else: ?>
-                        <!-- User is not logged in -->
-                        <li class="nav-item">
-                            <a class="nav-link" href="login.php">
-                                <i class="bi bi-box-arrow-in-right me-1"></i>Login
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link btn btn-primary ms-2 px-3 rounded-pill" href="register.php">
-                                <i class="bi bi-person-plus me-1"></i>Register
-                            </a>
-                        </li>
-                    <?php endif; ?>
-                </ul>
+              <ul class="navbar-nav">
+    <?php if (isset($_SESSION['user_id'])): ?>
+        <!-- User is logged in -->
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <div class="bg-black border border-white rounded-circle d-flex align-items-center justify-content-center me-2" 
+                    style="width: 32px; height: 32px;">
+                    <i class="bi bi-person-fill text-white"></i>
+                </div>
+                <?php echo htmlspecialchars($_SESSION['firstname']); ?>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
+                <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
+                    <li>
+                        <a class="dropdown-item" href="./admin/dashboard.php">
+                            <i class="bi bi-speedometer2 me-2"></i>Admin Panel
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                <?php endif; ?>
+                <li><a class="dropdown-item" href="profile.php"><i class="bi bi-person me-2"></i>Profile</a></li>
+                <li><a class="dropdown-item" href="emergency_request.php"><i class="bi bi-plus-circle me-2"></i>Request Ambulance</a></li>
+                <li><a class="dropdown-item" href="request_tracking.php"><i class="bi bi-geo-alt me-2"></i>Track Request</a></li>
+                <li><a class="dropdown-item" href="medical_profile.php"><i class="bi bi-heart-pulse me-2"></i>Medical Profile</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item text-danger" href="logout.php"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+            </ul>
+        </li>
+    <?php else: ?>
+        <!-- User is not logged in -->
+        <li class="nav-item">
+            <a class="nav-link" href="login.php">
+                <i class="bi bi-box-arrow-in-right me-1"></i>Login
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class=" btn btn-primary hover:bg-black hover:text-white ms-2 px-3 rounded-pill" href="register.php">
+                <i class="bi bi-person-plus me-1"></i>Register
+            </a>
+        </li>
+    <?php endif; ?>
+</ul>
+
             </div>
         </div>
     </nav>
     
-    <!-- Added padding-top to account for fixed navbar -->
-    <div style="padding-top: 76px;">
+    <div style="padding-top: 60px;">

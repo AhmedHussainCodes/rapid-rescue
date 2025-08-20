@@ -97,13 +97,13 @@ $conn->close();
                         <!-- Allergies Section -->
                         <div class="mb-4">
                             <label for="allergies" class="form-label">
-                                <i class="bi bi-exclamation-triangle text-warning me-2"></i>
-                                <strong>Allergies</strong>
+                                <i class="bi bi-exclamation-triangle text-danger me-2"></i>
+                                <strong class="text-white">Allergies</strong>
                             </label>
                             <textarea class="form-control" id="allergies" name="allergies" rows="3" 
                                       placeholder="List any known allergies (medications, foods, environmental, etc.)&#10;Example: Penicillin, Peanuts, Shellfish, Latex"><?php echo $medical_profile ? htmlspecialchars($medical_profile['allergies']) : ''; ?></textarea>
-                            <div class="form-text">
-                                <i class="bi bi-lightbulb me-1"></i>
+                            <div class="form-text text-white">
+                                <i class="bi bi-lightbulb text-warning me-1"></i>
                                 Include severity if known (mild, moderate, severe). Write "None known" if you have no known allergies.
                             </div>
                         </div>
@@ -112,12 +112,12 @@ $conn->close();
                         <div class="mb-4">
                             <label for="medical_history" class="form-label">
                                 <i class="bi bi-clipboard-pulse text-primary me-2"></i>
-                                <strong>Medical History</strong>
+                                <strong class="text-white">Medical History</strong>
                             </label>
                             <textarea class="form-control" id="medical_history" name="medical_history" rows="4" 
                                       placeholder="List significant medical conditions, surgeries, chronic illnesses, medications, etc.&#10;Example: Diabetes Type 2, High Blood Pressure, Heart Surgery (2020), Taking Metformin daily"><?php echo $medical_profile ? htmlspecialchars($medical_profile['medical_history']) : ''; ?></textarea>
-                            <div class="form-text">
-                                <i class="bi bi-lightbulb me-1"></i>
+                            <div class="form-text text-white">
+                                <i class="bi bi-lightbulb text-warning me-1"></i>
                                 Include current medications, past surgeries, chronic conditions, and any ongoing treatments.
                             </div>
                         </div>
@@ -125,22 +125,22 @@ $conn->close();
                         <!-- Emergency Contact Section -->
                         <div class="card bg-darker mb-4">
                             <div class="card-body">
-                                <h6 class="card-title text-warning">
-                                    <i class="bi bi-person-fill-exclamation me-2"></i>Emergency Contact
+                                <h6 class="card-title text-white">
+                                    <i class="bi bi-person-fill-exclamation text-gray-200 me-2"></i>Emergency Contact
                                 </h6>
-                                <p class="card-text small text-muted mb-3">
+                                <p class="card-text small text-white mb-3">
                                     Person to contact in case of medical emergency (other than yourself)
                                 </p>
                                 
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
-                                        <label for="emergency_contact" class="form-label">Contact Name</label>
+                                        <label for="emergency_contact" class="form-label text-white">Contact Name</label>
                                         <input type="text" class="form-control" id="emergency_contact" name="emergency_contact" 
                                                value="<?php echo $medical_profile ? htmlspecialchars($medical_profile['emergency_contact']) : ''; ?>" 
                                                placeholder="Full name of emergency contact">
                                     </div>
                                     <div class="col-md-6 mb-3">
-                                        <label for="emergency_contact_phone" class="form-label">Contact Phone</label>
+                                        <label for="emergency_contact_phone" class="form-label text-white">Contact Phone</label>
                                         <input type="tel" class="form-control" id="emergency_contact_phone" name="emergency_contact_phone" 
                                                value="<?php echo $medical_profile ? htmlspecialchars($medical_profile['emergency_contact_phone']) : ''; ?>" 
                                                placeholder="(555) 123-4567">
@@ -152,10 +152,10 @@ $conn->close();
                         <!-- Privacy Notice -->
                         <div class="card bg-darker mb-4">
                             <div class="card-body">
-                                <h6 class="card-title text-info">
+                                <h6 class="card-title text-info text-white">
                                     <i class="bi bi-shield-lock-fill me-2"></i>Privacy & Security
                                 </h6>
-                                <ul class="small text-muted mb-0">
+                                <ul class="small text-white mb-0">
                                     <li>Your medical information is encrypted and stored securely</li>
                                     <li>Only authorized medical personnel can access this data during emergencies</li>
                                     <li>Information is never shared with third parties without your consent</li>
@@ -203,23 +203,23 @@ $conn->close();
             </div>
             
             <!-- Quick Tips Card -->
-            <div class="card mt-4">
+            <div class="card mt-4  mb-3">
                 <div class="card-header">
-                    <h6 class="mb-0"><i class="bi bi-lightbulb-fill text-warning me-2"></i>Quick Tips</h6>
+                    <h6 class="mb-0"><i class="bi bi-lightbulb-fill text-warning me-1"></i>Quick Tips</h6>
                 </div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <h6 class="text-primary">For Allergies:</h6>
-                            <ul class="small">
+                            <h6 class="text-white">For Allergies:</h6>
+                            <ul class="small text-white">
                                 <li>Include medication names (generic and brand)</li>
                                 <li>Specify reaction type (rash, swelling, breathing issues)</li>
                                 <li>Note severity level if known</li>
                             </ul>
                         </div>
                         <div class="col-md-6">
-                            <h6 class="text-primary">For Medical History:</h6>
-                            <ul class="small">
+                            <h6 class="text-white">For Medical History:</h6>
+                            <ul class="small text-white">
                                 <li>List current medications with dosages</li>
                                 <li>Include recent surgeries or procedures</li>
                                 <li>Mention chronic conditions and treatments</li>

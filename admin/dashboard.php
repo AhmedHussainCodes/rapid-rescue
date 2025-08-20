@@ -7,26 +7,36 @@ include '../includes/db_connect.php';
 
 // Handle status updates
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_status'])) {
-    $request_id = $_POST['request_id'];
-    $new_status = $_POST['status'];
-    $ambulance_id = $_POST['ambulance_id'] ?? null;
-    
-    $stmt = $conn->prepare("UPDATE requests SET status = ?, ambulance_id = ? WHERE requestid = ?");
-    $stmt->bind_param("sii", $new_status, $ambulance_id, $request_id);
-    
+    $requestid = intval($_POST['request_id']);
+    $status = $_POST['status'];
+    $ambulanceid = !empty($_POST['ambulance_id']) ? intval($_POST['ambulance_id']) : null;
+
+    // Update request
+    $stmt = $conn->prepare("UPDATE requests SET ambulanceid = ?, status = ? WHERE requestid = ?");
+    $stmt->bind_param("isi", $ambulanceid, $status, $requestid);
+
     if ($stmt->execute()) {
         $success_message = "Request status updated successfully!";
-        
-        if ($ambulance_id && $new_status == 'En route') {
-            $conn->query("UPDATE ambulances SET status = 'On call' WHERE ambulanceid = $ambulance_id");
-        } elseif ($new_status == 'Completed' && $ambulance_id) {
-            $conn->query("UPDATE ambulances SET status = 'Available' WHERE ambulanceid = $ambulance_id");
+
+        // Update ambulance status if needed
+        if ($ambulanceid && $status === 'En route') {
+            $stmt2 = $conn->prepare("UPDATE ambulances SET status = 'On call' WHERE ambulanceid = ?");
+            $stmt2->bind_param("i", $ambulanceid);
+            $stmt2->execute();
+            $stmt2->close();
+        } elseif ($ambulanceid && $status === 'Completed') {
+            $stmt2 = $conn->prepare("UPDATE ambulances SET status = 'Available' WHERE ambulanceid = ?");
+            $stmt2->bind_param("i", $ambulanceid);
+            $stmt2->execute();
+            $stmt2->close();
         }
     } else {
-        $error_message = "Failed to update status.";
+        $error_message = "Failed to update status: " . $stmt->error;
     }
+
     $stmt->close();
 }
+
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['send_message'])) {
     $request_id = $_POST['request_id'];
@@ -45,20 +55,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['send_message'])) {
 }
 
 // Get all requests with user and ambulance information
-// Get available ambulances
 $requests_query = "
-    SELECT r.*, u.firstname, u.lastname, u.email, u.phone AS user_phone,
-           a.vehicle_number, CONCAT(d.firstname, ' ', d.lastname) AS driver_name, d.phone AS driver_phone
+    SELECT r.*, 
+           u.firstname, 
+           u.lastname, 
+           u.email, 
+           u.phone AS user_phone,
+           a.vehicle_number, 
+           CONCAT(d.firstname, ' ', d.lastname) AS driver_name, 
+           d.phone AS driver_phone
     FROM requests r 
-    JOIN users u ON r.userid = u.userid 
-    LEFT JOIN ambulances a ON r.ambulanceid = a.ambulanceid
-    LEFT JOIN drivers d ON a.driverid = d.driverid
+    JOIN users u 
+        ON r.userid = u.userid 
+    LEFT JOIN ambulances a 
+        ON r.ambulanceid = a.ambulanceid
+    LEFT JOIN drivers d 
+        ON a.driverid = d.driverid
     ORDER BY r.request_time DESC
 ";
 
 $requests_result = $conn->query($requests_query);
-
-
 
 // Get statistics
 $stats_query = "
@@ -85,365 +101,222 @@ $ambulance_stats = $conn->query("
 
 $available_ambulances = $conn->query("
     SELECT a.*, CONCAT(d.firstname, ' ', d.lastname) AS driver_name
-    FROM ambulances a
-    LEFT JOIN drivers d ON a.driverid = d.driverid
+    FROM ambulances a 
+    LEFT JOIN drivers d ON a.driverid = d.driverid 
     WHERE a.status = 'Available'
 ");
-
 
 $conn->close();
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $page_title . ' - Rapid Rescue Admin'; ?></title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚑</text></svg>">
     
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Bootstrap Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: ['class', '[data-theme="dark"]'],
+            theme: {
+                extend: {
+                    colors: {
+                        'black': '#000000',
+                        'white': '#ffffff',
+                        'grey': {
+                            100: '#f5f5f5',
+                            200: '#e5e5e5',
+                            300: '#d4d4d4',
+                            400: '#a3a3a3',
+                            500: '#737373',
+                            600: '#525252',
+                            700: '#404040',
+                            800: '#262626',
+                            900: '#171717'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     
     <!-- GSAP Animation Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
     
-    <!-- Custom CSS -->
-    <link href="../css/style.css" rel="stylesheet">
+    <!-- Alpine.js for interactivity -->
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     
-    <!-- Added Leaflet for maps -->
+    <!-- Leaflet for maps -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Iconify for icons (use version 2.1.0 to match sidebar.php) -->
+    <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
 </head>
-<body class="bg-dark text-light">
-    <div class="d-flex">
-        <!-- Enhanced Sidebar Navigation -->
-        <nav class="sidebar bg-black border-end border-secondary" style="width: 280px; min-height: 100vh;">
-            <div class="p-4">
-                <h4 class="text-white mb-4">
-                    <i class="bi bi-shield-check-fill me-2"></i>Admin Panel
-                </h4>
-                
-                <ul class="nav flex-column">
-                    <li class="nav-item mb-2">
-                        <a class="nav-link text-white bg-secondary rounded active" href="dashboard.php">
-                            <i class="bi bi-speedometer2 me-2"></i>Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item mb-2">
-                        <a class="nav-link text-light" href="real_time_monitoring.php">
-                            <i class="bi bi-geo-alt-fill me-2"></i>Real-time Monitoring
-                        </a>
-                    </li>
-                    <li class="nav-item mb-2">
-                        <a class="nav-link text-light" href="manage_ambulances.php">
-                            <i class="bi bi-truck-front me-2"></i>Ambulance Management
-                        </a>
-                    </li>
-                    <li class="nav-item mb-2">
-                        <a class="nav-link text-light" href="manage_drivers.php">
-                            <i class="bi bi-person-badge me-2"></i>Driver Management
-                        </a>
-                    </li>
-                    <li class="nav-item mb-2">
-                        <a class="nav-link text-light" href="user_management.php">
-                            <i class="bi bi-people-fill me-2"></i>User Management
-                        </a>
-                    </li>
-                </ul>
-                
-                <hr class="border-secondary my-4">
-                
-                <div class="dropdown">
-                    <a class="nav-link text-light dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                        <i class="bi bi-person-circle me-2"></i><?php echo htmlspecialchars($_SESSION['firstname']); ?>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-dark">
-                        <li><a class="dropdown-item" href="../index.php"><i class="bi bi-house me-2"></i>View Site</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="../logout.php"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
-                    </ul>
-                </div>
-            </div>
-        </nav>
-
-        <!-- Main Content -->
-        <main class="flex-grow-1 p-4">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="text-white mb-0"><i class="bi bi-speedometer2 me-2"></i>Admin Dashboard</h2>
-                <div class="text-muted">
-                    <i class="bi bi-clock me-1"></i>
-                    <span id="current-time"></span>
-                </div>
-            </div>
-            
+<body class="bg-black text-white font-sans">
+    <!-- Include admin header and sidebar -->
+    <?php include '../includes/admin_header.php'; ?>
+    <?php include 'sider.php'; ?>
+    
+    <!-- Main Content -->
+    <main id="main-content" class="min-h-screen pt-14 transition-all duration-300 sm:ml-64 ml-20 max-w-full">
+        <div class="p-4 sm:p-6">
+            <!-- Success/Error messages -->
             <?php if (isset($success_message)): ?>
-                <div class="alert alert-success fade-in" role="alert">
-                    <i class="bi bi-check-circle-fill me-2"></i><?php echo $success_message; ?>
+                <div class="mb-6 p-4 bg-grey-800 border border-grey-600 rounded-lg text-white max-w-full">
+                    <div class="flex items-center">
+                        <i class="ri-check-line mr-2"></i>
+                        <?php echo $success_message; ?>
+                    </div>
                 </div>
             <?php endif; ?>
             
             <?php if (isset($error_message)): ?>
-                <div class="alert alert-danger fade-in" role="alert">
-                    <i class="bi bi-exclamation-triangle-fill me-2"></i><?php echo $error_message; ?>
+                <div class="mb-6 p-4 bg-grey-800 border border-grey-600 rounded-lg text-white max-w-full">
+                    <div class="flex items-center">
+                        <i class="ri-error-warning-line mr-2"></i>
+                        <?php echo $error_message; ?>
+                    </div>
                 </div>
             <?php endif; ?>
             
             <!-- Statistics Cards -->
-            <div class="row mb-4">
-                <div class="col-md-3 mb-3">
-                    <div class="card bg-grey-900 border-secondary slide-up">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="card-title text-muted mb-1">Total Requests</h6>
-                                    <h3 class="mb-0 text-white"><?php echo $stats['total_requests']; ?></h3>
-                                </div>
-                                <i class="bi bi-clipboard-data fs-1 text-white"></i>
-                            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 max-w-full">
+                <div class="bg-grey-900 border border-grey-700 rounded-lg p-4 sm:p-6 slide-up">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-grey-400 text-sm font-medium">Total Requests</p>
+                            <p class="text-2xl sm:text-3xl font-bold text-white mt-2"><?php echo $stats['total_requests']; ?></p>
+                        </div>
+                        <div class="p-3 bg-grey-800 rounded-full">
+                            <i class="ri-file-list-3-line text-xl sm:text-2xl text-white"></i>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3 mb-3">
-                    <div class="card bg-grey-900 border-secondary slide-up">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="card-title text-muted mb-1">Pending</h6>
-                                    <h3 class="mb-0 text-warning"><?php echo $stats['pending_requests']; ?></h3>
-                                </div>
-                                <i class="bi bi-clock-fill fs-1 text-warning"></i>
-                            </div>
+                
+                <div class="bg-grey-900 border border-grey-700 rounded-lg p-4 sm:p-6 slide-up">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-grey-400 text-sm font-medium">Pending</p>
+                            <p class="text-2xl sm:text-3xl font-bold text-white mt-2"><?php echo $stats['pending_requests']; ?></p>
+                        </div>
+                        <div class="p-3 bg-grey-800 rounded-full">
+                            <i class="ri-time-line text-xl sm:text-2xl text-white"></i>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3 mb-3">
-                    <div class="card bg-grey-900 border-secondary slide-up">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="card-title text-muted mb-1">En Route</h6>
-                                    <h3 class="mb-0 text-info"><?php echo $stats['enroute_requests']; ?></h3>
-                                </div>
-                                <i class="bi bi-truck-front-fill fs-1 text-info"></i>
-                            </div>
+                
+                <div class="bg-grey-900 border border-grey-700 rounded-lg p-4 sm:p-6 slide-up">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-grey-400 text-sm font-medium">En Route</p>
+                            <p class="text-2xl sm:text-3xl font-bold text-white mt-2"><?php echo $stats['enroute_requests']; ?></p>
+                        </div>
+                        <div class="p-3 bg-grey-800 rounded-full">
+                            <i class="ri-truck-line text-xl sm:text-2xl text-white"></i>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3 mb-3">
-                    <div class="card bg-grey-900 border-secondary slide-up">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="card-title text-muted mb-1">Completed</h6>
-                                    <h3 class="mb-0 text-success"><?php echo $stats['completed_requests']; ?></h3>
-                                </div>
-                                <i class="bi bi-check-circle-fill fs-1 text-success"></i>
-                            </div>
+                
+                <div class="bg-grey-900 border border-grey-700 rounded-lg p-4 sm:p-6 slide-up">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-grey-400 text-sm font-medium">Completed</p>
+                            <p class="text-2xl sm:text-3xl font-bold text-white mt-2"><?php echo $stats['completed_requests']; ?></p>
                         </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Enhanced Ambulance Status with Quick Actions -->
-            <div class="row mb-4">
-                <div class="col-md-4 mb-3">
-                    <div class="card bg-grey-900 border-secondary">
-                        <div class="card-body">
-                            <h6 class="text-muted">Available Ambulances</h6>
-                            <h4 class="text-success mb-2"><?php echo $ambulance_stats['available_ambulances']; ?> / <?php echo $ambulance_stats['total_ambulances']; ?></h4>
-                            <div class="progress" style="height: 8px;">
-                                <div class="progress-bar bg-success" style="width: <?php echo ($ambulance_stats['available_ambulances'] / max($ambulance_stats['total_ambulances'], 1)) * 100; ?>%"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <div class="card bg-grey-900 border-secondary">
-                        <div class="card-body">
-                            <h6 class="text-muted">On Call</h6>
-                            <h4 class="text-warning mb-2"><?php echo $ambulance_stats['oncall_ambulances']; ?></h4>
-                            <small class="text-muted">Currently responding</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <div class="card bg-grey-900 border-secondary">
-                        <div class="card-body">
-                            <h6 class="text-muted">Maintenance</h6>
-                            <h4 class="text-danger mb-2"><?php echo $ambulance_stats['maintenance_ambulances']; ?></h4>
-                            <small class="text-muted">Out of service</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Quick Actions Panel -->
-            <div class="card bg-grey-900 border-secondary mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0 text-white"><i class="bi bi-lightning-fill me-2"></i>Quick Actions</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3 mb-2">
-                            <a href="real_time_monitoring.php" class="btn btn-outline-light w-100">
-                                <i class="bi bi-geo-alt-fill me-2"></i>Live Map
-                            </a>
-                        </div>
-                        <div class="col-md-3 mb-2">
-                            <a href="dispatch_control.php" class="btn btn-outline-light w-100">
-                                <i class="bi bi-broadcast me-2"></i>Dispatch
-                            </a>
-                        </div>
-                        <div class="col-md-3 mb-2">
-                            <a href="communication_center.php" class="btn btn-outline-light w-100">
-                                <i class="bi bi-chat-dots-fill me-2"></i>Messages
-                            </a>
-                        </div>
-                        <div class="col-md-3 mb-2">
-                            <a href="user_management.php" class="btn btn-outline-light w-100">
-                                <i class="bi bi-people-fill me-2"></i>Users
-                            </a>
+                        <div class="p-3 bg-grey-800 rounded-full">
+                            <i class="ri-check-line text-xl sm:text-2xl text-white"></i>
                         </div>
                     </div>
                 </div>
             </div>
             
             <!-- Emergency Requests Table -->
-            <div class="card bg-grey-900 border-secondary">
-                <div class="card-header">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0 text-white"><i class="bi bi-list-ul me-2"></i>Emergency Requests</h5>
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-sm btn-outline-light" onclick="refreshTable()">
-                                <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+            <div class="bg-grey-900 border border-grey-700 rounded-lg overflow-x-auto">
+                <div class="px-4 sm:px-6 py-4 border-b border-grey-700">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                        <h3 class="text-lg font-semibold text-white">Emergency Requests</h3>
+                        <div class="mt-4 sm:mt-0 flex items-center space-x-4">
+                            <button onclick="refreshTable()" class="px-4 py-2 bg-grey-800 hover:bg-grey-700 text-white rounded-lg transition-colors duration-200 text-sm sm:text-base">
+                                <i class="ri-refresh-line mr-2"></i>
+                                Refresh
                             </button>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="autoRefresh" checked>
-                                <label class="form-check-label text-muted" for="autoRefresh">Auto-refresh</label>
-                            </div>
+                            <label class="flex items-center space-x-2 text-grey-400">
+                                <input type="checkbox" id="autoRefresh" checked class="rounded border-grey-600 bg-grey-800 text-white focus:ring-grey-400">
+                                <span class="text-sm">Auto-refresh</span>
+                            </label>
                         </div>
                     </div>
                 </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-dark table-hover mb-0">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Patient</th>
-                                    <th>Type</th>
-                                    <th>Destination</th>
-                                    <th>Pickup Address</th>
-                                    <th>Assigned Ambulance</th>
-                                    <th>Request Time</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php if ($requests_result->num_rows > 0): ?>
-                                    <?php while ($request = $requests_result->fetch_assoc()): ?>
-                                        <tr class="fade-in">
-                                            <td><strong>#<?php echo $request['requestid']; ?></strong></td>
-                                            <td>
-                                                <div>
-                                                    <strong class="text-white"><?php echo htmlspecialchars($request['firstname'] . ' ' . $request['lastname']); ?></strong><br>
-                                                    <small class="text-muted"><?php echo htmlspecialchars($request['email']); ?></small><br>
-                                                    <small class="text-muted"><?php echo htmlspecialchars($request['user_phone']); ?></small>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <span class="badge <?php echo $request['type'] == 'Emergency' ? 'bg-danger' : 'bg-info'; ?>">
-                                                    <?php echo $request['type']; ?>
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <div>
-                                                    <strong class="text-white"><?php echo htmlspecialchars($request['hospital_name']); ?></strong><br>
-                                                    <small class="text-muted"><?php echo htmlspecialchars($request['phone']); ?></small>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <small class="text-muted"><?php echo htmlspecialchars($request['pickup_address']); ?></small>
-                                            </td>
-                                            <td>
-                                                <?php if ($request['vehicle_number']): ?>
-                                                    <div>
-                                                        <strong class="text-white"><?php echo htmlspecialchars($request['vehicle_number']); ?></strong><br>
-                                                        <small class="text-muted"><?php echo htmlspecialchars($request['driver_name']); ?></small>
-                                                    </div>
-                                                <?php else: ?>
-                                                    <span class="text-muted">Not assigned</span>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td>
-                                                <small class="text-muted"><?php echo date('M j, Y g:i A', strtotime($request['request_time'])); ?></small>
-                                            </td>
-                                            <td>
-                                                <span class="badge <?php 
-                                                    echo $request['status'] == 'Pending' ? 'status-pending' : 
-                                                        ($request['status'] == 'En route' ? 'status-enroute' : 'status-completed'); 
-                                                ?>">
-                                                    <?php echo $request['status']; ?>
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <div class="d-flex gap-1">
-                                                    <!-- Enhanced status update with ambulance assignment -->
-                                                    <form method="POST" class="d-inline">
-                                                        <input type="hidden" name="request_id" value="<?php echo $request['requestid']; ?>">
-                                                        <div class="d-flex gap-1">
-                                                            <select name="status" class="form-select form-select-sm" style="width: 120px;">
-                                                                <option value="Pending" <?php echo $request['status'] == 'Pending' ? 'selected' : ''; ?>>Pending</option>
-                                                                <option value="En route" <?php echo $request['status'] == 'En route' ? 'selected' : ''; ?>>En route</option>
-                                                                <option value="Completed" <?php echo $request['status'] == 'Completed' ? 'selected' : ''; ?>>Completed</option>
-                                                            </select>
-                                                            <?php if ($request['status'] == 'Pending'): ?>
-                                                                <select name="ambulance_id" class="form-select form-select-sm" style="width: 120px;">
-                                                                    <option value="">Select Ambulance</option>
-                                                                    <?php 
-                                                                    $available_ambulances->data_seek(0);
-                                                                    while ($ambulance = $available_ambulances->fetch_assoc()): 
-                                                                    ?>
-                                                                        <option value="<?php echo $ambulance['ambulanceid']; ?>">
-                                                                            <?php echo htmlspecialchars($ambulance['vehicle_number']); ?>
-                                                                        </option>
-                                                                    <?php endwhile; ?>
-                                                                </select>
-                                                            <?php endif; ?>
-                                                            <button type="submit" name="update_status" class="btn btn-sm btn-outline-light">
-                                                                <i class="bi bi-check"></i>
-                                                            </button>
-                                                        </div>
-                                                    </form>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    <?php endwhile; ?>
-                                <?php else: ?>
-                                    <tr>
-                                        <td colspan="9" class="text-center text-muted py-4">
-                                            <i class="bi bi-inbox fs-1 mb-3 d-block"></i>
-                                            No requests found
+                
+                <div class="min-w-full">
+                    <table class="w-full table-auto">
+                        <thead class="bg-grey-800">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-grey-300 uppercase tracking-wider">ID</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-grey-300 uppercase tracking-wider">Patient</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-grey-300 uppercase tracking-wider">Type</th>
+                                <th class="py-3 text-left text-xs font-medium text-grey-300 uppercase tracking-wider">Status</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-grey-300 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-grey-700">
+                            <?php if ($requests_result->num_rows > 0): ?>
+                                <?php while ($request = $requests_result->fetch_assoc()): ?>
+                                    <tr class="hover:bg-grey-800 transition-colors duration-200 fade-in">
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-white">#<?php echo $request['requestid']; ?></td>
+                                        <td class="px-4 py-4">
+                                            <div class="text-sm font-medium text-white"><?php echo htmlspecialchars($request['firstname'] . ' ' . $request['lastname']); ?></div>
+                                            <div class="text-sm text-grey-400"><?php echo htmlspecialchars($request['email']); ?></div>
+                                        </td>
+                                        <td class="px-4 py-4 whitespace-nowrap">
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-grey-800 text-white border border-grey-600">
+                                                <?php echo $request['type']; ?>
+                                            </span>
+                                        </td>
+                                        <td class="py-4 whitespace-nowrap">
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-grey-800 text-white border border-grey-600">
+                                                <?php echo $request['status']; ?>
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-4 whitespace-nowrap">
+                                            <form method="POST" class="flex flex-col sm:flex-row sm:items-center sm:space-x-2">
+                                                <input type="hidden" name="request_id" value="<?php echo $request['requestid']; ?>">
+                                                <select name="status" class="text-sm bg-grey-800 border border-grey-600 rounded px-3 py-1 text-white focus:ring-2 focus:ring-grey-400 focus:border-transparent">
+                                                    <option value="Pending" <?php echo $request['status'] == 'Pending' ? 'selected' : ''; ?>>Pending</option>
+                                                    <option value="En route" <?php echo $request['status'] == 'En route' ? 'selected' : ''; ?>>En route</option>
+                                                    <option value="Completed" <?php echo $request['status'] == 'Completed' ? 'selected' : ''; ?>>Completed</option>
+                                                </select>
+                                                <button type="submit" name="update_status" class="mt-2 sm:mt-0 px-3 py-1 bg-grey-700 hover:bg-grey-600 text-white rounded transition-colors duration-200 text-sm">
+                                                    Update
+                                                </button>
+                                            </form>
                                         </td>
                                     </tr>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
+                                <?php endwhile; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="5" class="px-4 py-12 text-center">
+                                        <div class="text-grey-400">
+                                            <i class="ri-file-list-3-line text-4xl mb-4"></i>
+                                            <p class="text-lg font-medium">No requests found</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
                 </div>
             </div>
-        </main>
-    </div>
-
-    <!-- Bootstrap 5 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        </div>
+    </main>
     
-    <!-- Enhanced JavaScript with GSAP animations -->
+    <!-- JavaScript with GSAP animations and sidebar sync -->
     <script>
         // Initialize GSAP animations
         gsap.registerPlugin(ScrollTrigger);
@@ -459,15 +332,6 @@ $conn->close();
             { opacity: 1, duration: 0.8, stagger: 0.05, ease: 'power2.out', delay: 0.3 }
         );
         
-        // Update current time
-        function updateTime() {
-            const now = new Date();
-            document.getElementById('current-time').textContent = now.toLocaleString();
-        }
-        updateTime();
-        setInterval(updateTime, 1000);
-        
-        // Auto-refresh functionality
         let autoRefreshInterval;
         
         function startAutoRefresh() {
@@ -485,21 +349,7 @@ $conn->close();
         }
         
         function refreshTable() {
-            // Show loading indicator
-            const loadingToast = document.createElement('div');
-            loadingToast.className = 'toast-container position-fixed top-0 end-0 p-3';
-            loadingToast.innerHTML = `
-                <div class="toast show" role="alert">
-                    <div class="toast-body bg-dark text-white">
-                        <i class="bi bi-arrow-clockwise me-2"></i>Refreshing data...
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(loadingToast);
-            
-            setTimeout(() => {
-                location.reload();
-            }, 1000);
+            location.reload();
         }
         
         // Auto-refresh toggle
@@ -513,16 +363,40 @@ $conn->close();
         
         // Start auto-refresh on page load
         startAutoRefresh();
-        
-        // Enhanced hover effects for sidebar
-        document.querySelectorAll('.sidebar .nav-link').forEach(link => {
-            link.addEventListener('mouseenter', () => {
-                gsap.to(link, { x: 5, duration: 0.2, ease: 'power2.out' });
-            });
+
+        // Fallback to sync main content with sidebar state
+        document.addEventListener('DOMContentLoaded', function () {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('main-content');
+            const toggleBtn = document.getElementById('toggle-sidebar');
             
-            link.addEventListener('mouseleave', () => {
-                gsap.to(link, { x: 0, duration: 0.2, ease: 'power2.out' });
-            });
+            if (!sidebar || !mainContent || !toggleBtn) {
+                console.error('Sidebar, main content, or toggle button not found.');
+                return;
+            }
+
+            // Function to update main content margin based on sidebar state
+            function updateMainContentMargin() {
+                const isCollapsed = sidebar.classList.contains('collapsed');
+                const isMobile = window.matchMedia("(max-width: 639px)").matches;
+
+                if (isMobile || isCollapsed) {
+                    mainContent.classList.remove('sm:ml-64');
+                    mainContent.classList.add('ml-20');
+                } else {
+                    mainContent.classList.remove('ml-20');
+                    mainContent.classList.add('sm:ml-64');
+                }
+            }
+
+            // Initial margin update
+            updateMainContentMargin();
+
+            // Listen for sidebar toggle
+            toggleBtn.addEventListener('click', updateMainContentMargin);
+
+            // Listen for window resize
+            window.addEventListener('resize', updateMainContentMargin);
         });
     </script>
 </body>

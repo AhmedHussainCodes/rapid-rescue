@@ -21,124 +21,135 @@ $conn->close();
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $page_title . ' - Rapid Rescue Admin'; ?></title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚑</text></svg>">
     
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="../css/style.css" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: ['class', '[data-theme="dark"]'],
+            theme: {
+                extend: {
+                    colors: {
+                        'black': '#000000',
+                        'white': '#ffffff',
+                        'grey': {
+                            100: '#f5f5f5',
+                            200: '#e5e5e5',
+                            300: '#d4d4d4',
+                            400: '#a3a3a3',
+                            500: '#737373',
+                            600: '#525252',
+                            700: '#404040',
+                            800: '#262626',
+                            900: '#171717'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- GSAP Animation Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Iconify for icons -->
+    <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
 </head>
-<body class="bg-dark text-light">
-    <div class="d-flex">
-        <!-- Sidebar Navigation -->
-        <nav class="sidebar bg-black border-end border-secondary" style="width: 280px; min-height: 100vh;">
-            <div class="p-4">
-                <h4 class="text-white mb-4">
-                    <i class="bi bi-shield-check-fill me-2"></i>Admin Panel
-                </h4>
-                
-                <ul class="nav flex-column">
-                    <li class="nav-item mb-2">
-                        <a class="nav-link text-light" href="dashboard.php">
-                            <i class="bi bi-speedometer2 me-2"></i>Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item mb-2">
-                        <a class="nav-link text-white bg-secondary rounded active" href="real_time_monitoring.php">
-                            <i class="bi bi-geo-alt-fill me-2"></i>Real-time Monitoring
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </nav>
-
-        <!-- Main Content -->
-        <main class="flex-grow-1 p-4">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="text-white mb-0"><i class="bi bi-geo-alt-fill me-2"></i>Real-time Monitoring</h2>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-outline-light" onclick="refreshMap()">
-                        <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+<body class="bg-black text-white font-sans">
+    <!-- Include admin header and sidebar -->
+    <?php include '../includes/admin_header.php'; ?>
+    <?php include 'sider.php'; ?>
+    
+    <!-- Main Content -->
+    <main id="main-content" class="min-h-screen pt-14 transition-all duration-300 sm:ml-64 ml-20 max-w-full">
+        <div class="p-4 sm:p-6">
+            <!-- Header -->
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-6">
+                <h2 class="text-xl sm:text-2xl font-semibold text-white mb-4 sm:mb-0">
+                    <iconify-icon icon="ri:map-pin-line" class="mr-2"></iconify-icon>Real-time Monitoring
+                </h2>
+                <div class="flex items-center gap-4">
+                    <button onclick="refreshMap()" class="px-4 py-2 bg-grey-800 hover:bg-grey-700 text-white rounded-lg transition-colors duration-200 slide-up text-sm sm:text-base">
+                        <iconify-icon icon="ri:refresh-line" class="mr-2"></iconify-icon>Refresh
                     </button>
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="liveTracking" checked>
-                        <label class="form-check-label text-muted" for="liveTracking">Live Tracking</label>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="liveTracking" class="peer h-4 w-4 text-grey-400 focus:ring-grey-400 border-grey-600 rounded" checked>
+                        <label for="liveTracking" class="ml-2 text-sm text-grey-400">Live Tracking</label>
                     </div>
                 </div>
             </div>
             
-            <div class="row">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 max-w-full">
                 <!-- Live Map -->
-                <div class="col-lg-8 mb-4">
-                    <div class="card bg-grey-900 border-secondary">
-                        <div class="card-header">
-                            <h5 class="mb-0 text-white"><i class="bi bi-map me-2"></i>Live Map</h5>
+                <div class="lg:col-span-2">
+                    <div class="bg-grey-900 border border-grey-700 rounded-lg overflow-x-auto">
+                        <div class="px-4 sm:px-6 py-4 border-b border-grey-700">
+                            <h3 class="text-lg font-semibold text-white"><iconify-icon icon="ri:map-line" class="mr-2"></iconify-icon>Live Map</h3>
                         </div>
-                        <div class="card-body p-0">
-                            <div id="liveMap" style="height: 600px; width: 100%;"></div>
+                        <div class="p-0">
+                            <div id="liveMap" class="w-full h-[50vh] sm:h-[600px]"></div>
                         </div>
                     </div>
                 </div>
                 
                 <!-- Active Requests Panel -->
-                <div class="col-lg-4">
-                    <div class="card bg-grey-900 border-secondary">
-                        <div class="card-header">
-                            <h5 class="mb-0 text-white"><i class="bi bi-activity me-2"></i>Active Requests</h5>
+                <div class="lg:col-span-1">
+                    <div class="bg-grey-900 border border-grey-700 rounded-lg overflow-x-auto">
+                        <div class="px-4 sm:px-6 py-4 border-b border-grey-700">
+                            <h3 class="text-lg font-semibold text-white"><iconify-icon icon="ri:pulse-line" class="mr-2"></iconify-icon>Active Requests</h3>
                         </div>
-                        <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+                        <div class="p-4 max-h-[50vh] sm:max-h-[600px] overflow-y-auto">
                             <?php if ($active_requests->num_rows > 0): ?>
                                 <?php while ($request = $active_requests->fetch_assoc()): ?>
-                                    <div class="border border-secondary rounded p-3 mb-3 fade-in">
-                                        <div class="d-flex justify-content-between align-items-start mb-2">
-                                            <h6 class="text-white mb-0">#<?php echo $request['requestid']; ?></h6>
-                                            <span class="badge <?php echo $request['status'] == 'Pending' ? 'status-pending' : 'status-enroute'; ?>">
-                                                <?php echo $request['status']; ?>
-                                            </span>
+                                    <div class="border border-grey-700 rounded-lg p-4 mb-4 bg-grey-800 hover:bg-grey-700 transition-colors duration-200 fade-in">
+                                        <div class="flex justify-between items-start mb-2">
+                                            <h6 class="text-white text-sm font-semibold">#<?php echo $request['requestid']; ?></h6>
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-grey-900 text-white border border-grey-600"><?php echo $request['status']; ?></span>
                                         </div>
-                                        
-                                        <p class="text-muted mb-2">
-                                            <strong><?php echo htmlspecialchars($request['firstname'] . ' ' . $request['lastname']); ?></strong><br>
+                                        <p class="text-grey-400 text-sm mb-2">
+                                            <strong class="text-white"><?php echo htmlspecialchars($request['firstname'] . ' ' . $request['lastname']); ?></strong><br>
                                             <?php echo htmlspecialchars($request['pickup_address']); ?>
                                         </p>
-                                        
                                         <?php if ($request['vehicle_number']): ?>
-                                            <div class="bg-black rounded p-2 mb-2">
-                                                <small class="text-muted">Assigned Ambulance:</small><br>
-                                                <strong class="text-white"><?php echo htmlspecialchars($request['vehicle_number']); ?></strong><br>
-                                                <small class="text-muted">Driver: <?php echo htmlspecialchars($request['driver_name']); ?></small>
+                                            <div class="bg-grey-900 rounded-lg p-2 mb-2">
+                                                <p class="text-sm text-grey-400 mb-1">Assigned Ambulance:</p>
+                                                <p class="text-sm font-medium text-white"><?php echo htmlspecialchars($request['vehicle_number']); ?></p>
+                                                <p class="text-sm text-grey-400">Driver: <?php echo htmlspecialchars($request['driver_firstname'] . ' ' . $request['driver_lastname']); ?></p>
                                             </div>
                                         <?php endif; ?>
-                                        
-                                        <small class="text-muted">
-                                            <i class="bi bi-clock me-1"></i>
+                                        <p class="text-sm text-grey-400">
+                                            <iconify-icon icon="ri:time-line" class="mr-1"></iconify-icon>
                                             <?php echo date('g:i A', strtotime($request['request_time'])); ?>
-                                        </small>
+                                        </p>
                                     </div>
                                 <?php endwhile; ?>
                             <?php else: ?>
-                                <div class="text-center text-muted py-4">
-                                    <i class="bi bi-check-circle fs-1 mb-3 d-block"></i>
-                                    No active requests
+                                <div class="text-center text-grey-400 py-12">
+                                    <iconify-icon icon="ri:checkbox-circle-line" class="text-4xl mb-4"></iconify-icon>
+                                    <p class="text-lg font-medium">No active requests</p>
                                 </div>
                             <?php endif; ?>
                         </div>
                     </div>
                 </div>
             </div>
-        </main>
-    </div>
+        </div>
+    </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- JavaScript with GSAP animations, Leaflet map, and sidebar sync -->
     <script>
         // Initialize map
         let map = L.map('liveMap').setView([40.7128, -74.0060], 12); // Default to NYC
@@ -149,14 +160,10 @@ $conn->close();
         
         // Add markers for active requests and ambulances
         function updateMapMarkers() {
-            // This would be populated with real data from the database
-            // For demo purposes, adding sample markers
-            
             // Sample ambulance marker
             L.marker([40.7589, -73.9851])
                 .addTo(map)
-                .bindPopup('<strong>Ambulance A001</strong><br>Status: En route<br>Driver: John Doe')
-                .openPopup();
+                .bindPopup('<strong>Ambulance A001</strong><br>Status: En route<br>Driver: John Doe');
                 
             // Sample request marker
             L.marker([40.7505, -73.9934])
@@ -168,7 +175,6 @@ $conn->close();
         
         // Auto-refresh map data
         function refreshMap() {
-            // In a real implementation, this would fetch updated coordinates
             console.log('Refreshing map data...');
         }
         
@@ -187,10 +193,52 @@ $conn->close();
         liveTrackingInterval = setInterval(refreshMap, 10000);
         
         // GSAP animations
-        gsap.fromTo('.fade-in', 
-            { opacity: 0, x: 20 }, 
-            { opacity: 1, x: 0, duration: 0.6, stagger: 0.1, ease: 'power2.out' }
+        gsap.registerPlugin(ScrollTrigger);
+        
+        gsap.fromTo('.slide-up', 
+            { opacity: 0, y: 30 }, 
+            { opacity: 1, y: 0, duration: 0.6, stagger: 0.1, ease: 'power2.out' }
         );
+        
+        gsap.fromTo('.fade-in', 
+            { opacity: 0 }, 
+            { opacity: 1, duration: 0.8, stagger: 0.05, ease: 'power2.out', delay: 0.3 }
+        );
+
+        // Fallback to sync main content with sidebar state
+        document.addEventListener('DOMContentLoaded', function () {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('main-content');
+            const toggleBtn = document.getElementById('toggle-sidebar');
+            
+            if (!sidebar || !mainContent || !toggleBtn) {
+                console.error('Sidebar, main content, or toggle button not found.');
+                return;
+            }
+
+            // Function to update main content margin based on sidebar state
+            function updateMainContentMargin() {
+                const isCollapsed = sidebar.classList.contains('collapsed');
+                const isMobile = window.matchMedia("(max-width: 639px)").matches;
+
+                if (isMobile || isCollapsed) {
+                    mainContent.classList.remove('sm:ml-64');
+                    mainContent.classList.add('ml-20');
+                } else {
+                    mainContent.classList.remove('ml-20');
+                    mainContent.classList.add('sm:ml-64');
+                }
+            }
+
+            // Initial margin update
+            updateMainContentMargin();
+
+            // Listen for sidebar toggle
+            toggleBtn.addEventListener('click', updateMainContentMargin);
+
+            // Listen for window resize
+            window.addEventListener('resize', updateMainContentMargin);
+        });
     </script>
 </body>
 </html>

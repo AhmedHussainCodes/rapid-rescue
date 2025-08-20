@@ -67,14 +67,20 @@ $conn->close();
                     <h4 class="mb-0"><i class="bi bi-plus-circle-fill me-2"></i>Request Ambulance Service</h4>
                 </div>
                 <div class="card-body">
-                    <?php if (!empty($success_message)): ?>
-                        <div class="alert alert-success" role="alert">
-                            <i class="bi bi-check-circle-fill me-2"></i><?php echo htmlspecialchars($success_message); ?>
-                            <div class="mt-2">
-                                <small>You will be redirected to the tracking page in a few seconds...</small>
-                            </div>
-                        </div>
-                    <?php endif; ?>
+                   <?php if (!empty($success_message)): ?>
+    <div class="alert alert-success" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i><?php echo htmlspecialchars($success_message); ?>
+        <div class="mt-2">
+            <small>You will be redirected to the tracking page in a few seconds...</small>
+        </div>
+    </div>
+
+    <script>
+        setTimeout(function() {
+            window.location.href = "request_tracking.php";
+        }, 3000); // 3 seconds
+    </script>
+<?php endif; ?>
                     
                     <?php if (!empty($error_message)): ?>
                         <div class="alert alert-danger" role="alert">
@@ -85,7 +91,7 @@ $conn->close();
                     <form method="POST" id="emergencyForm">
                         <!-- Request Type -->
                         <div class="mb-4">
-                            <label for="type" class="form-label">Request Type <span class="text-danger">*</span></label>
+                            <label for="type" class="form-label text-white">Request Type <span class="text-danger">*</span></label>
                             <select class="form-select" id="type" name="type" required>
                                 <option value="">Select request type...</option>
                                 <option value="Emergency" <?php echo (isset($_POST['type']) && $_POST['type'] == 'Emergency') ? 'selected' : ''; ?>>
@@ -100,13 +106,13 @@ $conn->close();
                         <!-- Hospital Information -->
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="hospital_name" class="form-label">Hospital/Destination Name <span class="text-danger">*</span></label>
+                                <label for="hospital_name" class="form-label text-white">Hospital/Destination Name <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="hospital_name" name="hospital_name" 
                                        value="<?php echo isset($_POST['hospital_name']) ? htmlspecialchars($_POST['hospital_name']) : ''; ?>" 
                                        placeholder="e.g., City General Hospital" required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="phone" class="form-label">Hospital Phone Number <span class="text-danger">*</span></label>
+                                <label for="phone" class="form-label text-white">Hospital Phone Number <span class="text-danger">*</span></label>
                                 <input type="tel" class="form-control" id="phone" name="phone" 
                                        value="<?php echo isset($_POST['phone']) ? htmlspecialchars($_POST['phone']) : ''; ?>" 
                                        placeholder="(555) 123-4567" required>
@@ -114,14 +120,14 @@ $conn->close();
                         </div>
                         
                         <div class="mb-3">
-                            <label for="address" class="form-label">Hospital/Destination Address <span class="text-danger">*</span></label>
+                            <label for="address" class="form-label text-white">Hospital/Destination Address <span class="text-danger">*</span></label>
                             <textarea class="form-control" id="address" name="address" rows="2" 
                                       placeholder="Full address including street, city, state, zip code" required><?php echo isset($_POST['address']) ? htmlspecialchars($_POST['address']) : ''; ?></textarea>
                         </div>
                         
                         <!-- Pickup Information -->
                         <div class="mb-3">
-                            <label for="pickup_address" class="form-label">Pickup Address <span class="text-danger">*</span></label>
+                            <label for="pickup_address" class="form-label text-white">Pickup Address <span class="text-danger">*</span></label>
                             <textarea class="form-control" id="pickup_address" name="pickup_address" rows="2" 
                                       placeholder="Where should the ambulance pick you up?" required><?php echo isset($_POST['pickup_address']) ? htmlspecialchars($_POST['pickup_address']) : ''; ?></textarea>
                             <div class="form-text">
@@ -132,7 +138,7 @@ $conn->close();
                         
                         <!-- Additional Notes -->
                         <div class="mb-4">
-                            <label for="notes" class="form-label">Additional Notes (Optional)</label>
+                            <label for="notes" class="form-label text-white">Additional Notes (Optional)</label>
                             <textarea class="form-control" id="notes" name="notes" rows="3" 
                                       placeholder="Any special instructions, medical conditions, or accessibility requirements..."><?php echo isset($_POST['notes']) ? htmlspecialchars($_POST['notes']) : ''; ?></textarea>
                         </div>
@@ -140,16 +146,16 @@ $conn->close();
                         <!-- Patient Information Display -->
                         <div class="card bg-darker mb-4">
                             <div class="card-body">
-                                <h6 class="card-title text-primary">Patient Information (from your profile)</h6>
+                                <h6 class="card-title text-white">Patient Information (from your profile)</h6>
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <p class="mb-1"><strong>Name:</strong> <?php echo htmlspecialchars($_SESSION['firstname'] . ' ' . $_SESSION['lastname']); ?></p>
-                                        <p class="mb-0"><strong>Email:</strong> <?php echo htmlspecialchars($_SESSION['email']); ?></p>
+                                        <p class="mb-1 text-white"><strong>Name:</strong> <?php echo htmlspecialchars($_SESSION['firstname'] . ' ' . $_SESSION['lastname']); ?></p>
+                                        <p class="mb-0 text-white"><strong>Email:</strong> <?php echo htmlspecialchars($_SESSION['email']); ?></p>
                                     </div>
                                     <div class="col-md-6">
                                         <p class="mb-0">
-                                            <a href="profile.php" class="btn btn-sm btn-outline-primary">
-                                                <i class="bi bi-pencil me-1"></i>Update Profile
+                                            <a href="profile.php" class="btn btn-sm hover:text-white text-gray-300">
+                                                <i class="bi bi-pencil me-1 text-gray-300"></i>Update Profile
                                             </a>
                                         </p>
                                     </div>
@@ -161,9 +167,9 @@ $conn->close();
                         <div class="mb-3">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="terms" required>
-                                <label class="form-check-label" for="terms">
+                                <label class="form-check-label text-white" for="terms">
                                     I understand that this request will be processed as quickly as possible and I agree to the 
-                                    <a href="#" class="text-primary">terms of service</a>.
+                                    <a href="#" class="text-gray-400">terms of service</a>.
                                 </label>
                             </div>
                         </div>
@@ -179,21 +185,21 @@ $conn->close();
             
             <!-- Information Cards -->
             <div class="row mt-4">
-                <div class="col-md-6">
+                <div class="col-md-6 mb-6">
                     <div class="card">
                         <div class="card-body text-center">
-                            <i class="bi bi-clock-fill text-primary fs-1 mb-3"></i>
-                            <h6>Average Response Time</h6>
-                            <p class="text-muted mb-0">Emergency: 6-8 minutes<br>Non-Emergency: 15-20 minutes</p>
+                            <i class="bi bi-clock-fill text-white fs-1 mb-3"></i>
+                            <h6 class="text-white">Average Response Time</h6>
+                            <p class="text-gray-500 mb-0">Emergency: 6-8 minutes<br>Non-Emergency: 15-20 minutes</p>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="card">
                         <div class="card-body text-center">
-                            <i class="bi bi-geo-alt-fill text-primary fs-1 mb-3"></i>
-                            <h6>Real-Time Tracking</h6>
-                            <p class="text-muted mb-0">Track your ambulance location and estimated arrival time</p>
+                            <i class="bi bi-geo-alt-fill text-white fs-1 mb-3"></i>
+                            <h6 class="text-white">Real-Time Tracking</h6>
+                            <p class="text-gray-500 mb-0">Track your ambulance location and estimated arrival time</p>
                         </div>
                     </div>
                 </div>

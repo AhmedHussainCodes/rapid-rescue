@@ -40,7 +40,7 @@ function getStatusIcon($status) {
     <div class="row">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="text-primary mb-0"><i class="bi bi-geo-alt-fill me-2"></i>Track Your Requests</h2>
+                <h2 class="text-white mb-0"><i class="bi bi-geo-alt-fill me-2"></i>Track Your Requests</h2>
                 <a href="emergency_request.php" class="btn btn-primary">
                     <i class="bi bi-plus-circle me-2"></i>New Request
                 </a>
@@ -48,11 +48,11 @@ function getStatusIcon($status) {
             
             <?php if (empty($requests)): ?>
                 <!-- No requests found -->
-                <div class="card">
+                <div class="card mb-4">
                     <div class="card-body text-center py-5">
-                        <i class="bi bi-inbox fs-1 text-muted mb-3"></i>
-                        <h5 class="text-muted">No Requests Found</h5>
-                        <p class="text-muted mb-4">You haven't submitted any ambulance requests yet.</p>
+                        <i class="bi bi-inbox fs-1 text-white mb-3"></i>
+                        <h5 class="text-white">No Requests Found</h5>
+                        <p class="text-white mb-4">You haven't submitted any ambulance requests yet.</p>
                         <a href="emergency_request.php" class="btn btn-primary">
                             <i class="bi bi-plus-circle me-2"></i>Submit Your First Request
                         </a>
@@ -183,24 +183,59 @@ function getStatusIcon($status) {
             <?php endif; ?>
             
             <!-- Help Section -->
-            <div class="card bg-darker">
+            <div class="card bg-darker mb-4">
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-8">
-                            <h6 class="text-primary">Need Help?</h6>
-                            <p class="mb-0">If you have questions about your request or need to make changes, contact our support team.</p>
+                            <h6 class="text-white">Need Help?</h6>
+                            <p class="mb-0 text-white">If you have questions about your request or need to make changes, contact our support team.</p>
                         </div>
-                        <div class="col-md-4 text-end">
-                            <a href="contact.php" class="btn btn-outline-primary">
-                                <i class="bi bi-headset me-2"></i>Contact Support
-                            </a>
-                        </div>
+                       <div class="col-md-4 text-end">
+   <i class="bi bi-headset text-white"></i> <a href="contact.php" class="contact-link">
+        Contact Support
+    </a>
+</div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+<style>
+    .contact-link {
+        color: white;
+        text-decoration: none;
+        position: relative;
+        transition: color 0.3s ease;
+        font-weight: 500;
+    }
+
+    /* Underline effect */
+    .contact-link::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: -3px;
+        width: 0;
+        height: 2px;
+        background-color: white;
+        transition: width 0.3s ease;
+    }
+
+    /* Hover effects */
+    .contact-link:hover {
+        color: #f5f5f5; /* Slightly brighter white */
+    }
+    .contact-link:hover::after {
+        width: 100%;
+    }
+    .contact-link i {
+        transition: transform 0.3s ease;
+    }
+    .contact-link:hover i {
+        transform: scale(1.15);
+    }
+</style>
 
 <script>
 // Auto-refresh page every 30 seconds for active requests

@@ -48,7 +48,7 @@ $stmt->close();
 $conn->close();
 ?>
 
-<div class="container mt-4">
+<div class="container mt-4 mb-3">
     <div class="row">
         <div class="col-md-8 mx-auto">
             <div class="card">
@@ -71,39 +71,39 @@ $conn->close();
                     <form method="POST">
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="firstname" class="form-label">First Name</label>
+                                <label for="firstname" class="form-label text-white">First Name</label>
                                 <input type="text" class="form-control" id="firstname" name="firstname" 
                                        value="<?php echo htmlspecialchars($user['firstname']); ?>" required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="lastname" class="form-label">Last Name</label>
+                                <label for="lastname" class="form-label text-white">Last Name</label>
                                 <input type="text" class="form-control" id="lastname" name="lastname" 
                                        value="<?php echo htmlspecialchars($user['lastname']); ?>" required>
                             </div>
                         </div>
                         
                         <div class="mb-3">
-                            <label for="email" class="form-label">Email Address</label>
+                            <label for="email" class="form-label text-white">Email Address</label>
                             <input type="email" class="form-control" id="email" name="email" 
                                    value="<?php echo htmlspecialchars($user['email']); ?>" readonly>
                             <div class="form-text">Email cannot be changed</div>
                         </div>
                         
                         <div class="mb-3">
-                            <label for="phone" class="form-label">Phone Number</label>
+                            <label for="phone" class="form-label text-white">Phone Number</label>
                             <input type="tel" class="form-control" id="phone" name="phone" 
                                    value="<?php echo htmlspecialchars($user['phone']); ?>" required>
                         </div>
                         
                         <div class="mb-3">
-                            <label for="dob" class="form-label">Date of Birth</label>
+                            <label for="dob" class="form-label text-white">Date of Birth</label>
                             <input type="date" class="form-control" id="dob" name="dob" 
                                    value="<?php echo htmlspecialchars($user['dob']); ?>" readonly>
                             <div class="form-text">Date of birth cannot be changed</div>
                         </div>
                         
                         <div class="mb-3">
-                            <label for="address" class="form-label">Address</label>
+                            <label for="address" class="form-label text-white">Address</label>
                             <textarea class="form-control" id="address" name="address" rows="3" required><?php echo htmlspecialchars($user['address']); ?></textarea>
                         </div>
                         
