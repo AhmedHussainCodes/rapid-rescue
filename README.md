@@ -58,16 +58,7 @@ php artisan key:generate
   php artisan serve
   ```
 - Visit `http://localhost:8000` in your browser.
-
----
-
-## 📸 Screenshots
-
-<!-- Add actual screenshots here -->
-| Home Page                | Incident Map             | Admin Dashboard            |
-|--------------------------|--------------------------|----------------------------|
-| ![](screenshots/home.png) | ![](screenshots/map.png) | ![](screenshots/admin.png) |
-
+- 
 ---
 
 ## 🙌 Contributing
